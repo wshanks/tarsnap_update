@@ -1,0 +1,9 @@
+[Unit]
+Description=Prints the date every minute
+Wants=tarsnap.timer
+
+[Service]
+ExecStart=/home/wshanks/bin/tarsnap_update %h/Documents/Vault
+
+[Install]
+WantedBy=tarsnap.target

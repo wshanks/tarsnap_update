@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+"""Short script to create a new tarsnap backup"""
+import datetime
+import os
+import shlex
+import subprocess
+
+DATE_FORMAT = '%Y-%m-%d_%Hh%Mm%Ss'
+
+
+def main(args):
+    """Main script"""
+    date_str = datetime.datetime.now().strftime(DATE_FORMAT)
+    target = os.path.abspath(args['target'])
+    archive = '{base}: {date}'.format(base=os.path.basename(target),
+                                      date=date_str)
+    cmd = 'tarsnap -c -f "{archive}" "{target}"'
+    cmd = cmd.format(archive=archive, target=target)
+    subprocess.call(shlex.split(cmd))
+
+if __name__ == '__main__':
+    import argparse
+    # pylint: disable=invalid-name
+    parser = argparse.ArgumentParser('Backup files via tarsnap')
+    # pylint: enable=invalid-name
+    parser.add_argument('target',
+                        help=('Target directory to backup.'))
+    main(vars(parser.parse_args()))

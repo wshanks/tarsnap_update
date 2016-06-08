@@ -1,0 +1,10 @@
+[Unit]
+Description=Tarsnap Timer
+
+[Timer]
+OnBootSec=25min
+OnCalendar=*-*-* 00:00:00
+Persistent=true
+
+[Install]
+WantedBy=tarsnap.target
