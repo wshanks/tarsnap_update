@@ -95,9 +95,9 @@ def space_by_span(target, spacing_params, reverse=False):
     trying to save one subsequent item within a spacing of the last item, even
     if the two are close. This behavior was chosen because it is more
     conservative than trying to maintain the spacing as closely as possible
-    (which can have the side effect of throwing out all elements as the cross a
-    certain bound when space_by_span is called repeatedly on a list each time a
-    new element is added to the beginning of it).
+    (which can have the side effect of throwing out all elements as they cross
+    a certain bound when space_by_span is called repeatedly on a list each time
+    a new element is added to the beginning of it).
     """
     sorted_target = sorted(enumerate(target), key=lambda x: x[1],
                            reverse=reverse)
