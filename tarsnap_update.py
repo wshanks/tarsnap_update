@@ -64,6 +64,9 @@ def remove_backups(base):
     keep_idx = list_filters.space_by_span(times, aging_params)
     deletions = [backups[idx] for idx in range(len(backups))
                  if idx not in keep_idx]
+    if len(deletions) == 0:
+        logging.info('No expired backups at this time')
+        return
     logging.info('Deleting expired backups: %s', ', '.join(deletions))
     cmd = 'tarsnap -d -f "{}"'.format(' -f '.join(deletions))
     for _ in range(MAX_RETRY):
