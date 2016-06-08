@@ -1,13 +1,7 @@
 [Unit]
-Description=Prints the date every minute
+Description=tarsnap backup
 Wants=tarsnap.timer
-# Can't depend on network-online when run as --user unit
-# Requires=network-online.target
-# After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/sleep 20 ; /usr/bin/python3 %h/bin/tarsnap_update %h/Documents/Vault
-
-[Install]
-WantedBy=timers.target
+ExecStart=/usr/bin/python3 %h/bin/tarsnap_update %h/Documents/Vault --delay 600 --buffer 120
