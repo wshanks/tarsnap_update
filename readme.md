@@ -11,6 +11,7 @@ The retention rules are a list of tuples where the first element is the spacing 
 Setup for use with systemd
 --------------------------
 Modify ExecStart in tarsnap.service to run tarsnap_update on correct target. Also, make sure path to tarsnap_update is correct, and set the delay and start buffers as desired.
+
 	cp tarsnap.timer tarsnap.service ~/.config/systemd/user
 	systemctl --user enable tarsnap.timer
 	systemctl --user enable tarnsape.service
