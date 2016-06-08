@@ -17,81 +17,108 @@
 #
 # Copyright 2016, willsALMANJ
 
-def sort_by_bounds(target, bounds):
-    """Sort target into a list of sublists with the distance of all elements in
-    one sublist from the first element of target being less than the bound with
-    the same index as that sublist (but greater than the previous sublist)
-    """
-    sorted_target = [[] for dummy in range(len(bounds))]
-    for idx, elem in enumerate(target):
-        for bound_idx, bound in enumerate(bounds):
-            if not bound or abs(elem - target[0]) < bound:
-                sorted_target[bound_idx].append(idx)
-                break
 
-    return sorted_target
+def spacing_lookup(distance, spacing_params):
+    '''Determine the spacing that applies for distance
+
+    distance is compared to the bounds in spacing_params. The spacing
+    associated with the smallest bound greater than distance is returned.
+    '''
+    spacing = None
+    for spacing, bound in spacing_params:
+        if distance < bound:
+            break
+    return spacing
 
 
-def space_by_span(target, spacing_params):
+def eligible_followers(target, index, spacing_params):
+    '''Find elements within spacing of element of target
+
+    target -- list of elements
+    index -- starting index to compare subsequent elements to
+    spacing_params -- spacing params list
+
+    Elements following index are examined to see if they want the same spacing
+    as index and, if so, if they are within spacing of index.'''
+    followers = []
+    cur_spacing = spacing_lookup(abs(target[index] - target[0]),
+                                 spacing_params)
+    for jdx in range(index+1, len(target)):
+        j_spacing = spacing_lookup(abs(target[jdx] - target[0]),
+                                   spacing_params)
+
+        j_distance = abs(target[jdx] - target[index])
+
+        # Extra 5% cushion to avoid edge cases
+        if j_spacing == cur_spacing and j_distance < 1.05*cur_spacing:
+            followers.append(jdx)
+        else:
+            break
+
+    return followers
+
+
+def space_by_span(target, spacing_params, reverse=False):
     """Select entries in target that satisfy the specified spacing_params
 
     space_by_span examines the elements in target from first to last and
     selects those that are spaced apart enough to satisfy the parameters in
     spacing_params. spacing_params consists of a set of target element spacings
     and target element bounds. For each element, the only spacing/bound pair
-    that applies is the one for which that element is closer to the first
-    element of target than the bound but not closer than the previous bound
-    (the bounds in spacing_params should be in increasing order). The elements
-    of target are examined one by one and either selected or not selected. The
-    first element is always selected. Subsequently, an element is selected if
-    it is at least half a spacing away from the last selected element and is
-    the closest element in target to being exactly one spacing away from the
-    last selected element.
+    that applies is the one with the smallest bound that is greater than the
+    distance from the element to the first element of target.
+
+    The elements of target are examined one by one and either selected or not
+    selected. The first element and last element for each spacing are always
+    selected. Elements subsequent to the first in a spacing set are selected if
+    they are the closest to being one spacing away from the previous element
+    (without being more than 1.05 * spacing away; the 5% extra is to allow for
+    some tolerance of edge cases).
 
     target: a list of items that can be subtracted from each other to calculate
         spacings
     spacing_params: a list of 2-element tuples where the first element is a
-        spacing and the second element is a bound
-
-    Notes
-    * Elements beyond the last bound are not selected.
-    * If a bound evaluates to false, its spacing is used for all remaining
-    elements not covered by any previous bound.
+        spacing and the second element is a bound. The list should be ordered
+        from smallest to largest spacings and bounds.
+    reverse: target is copied and sorted inside the function before applying
+        spacings. reverse sets whether or not the list is reversed after
+        sorting.
 
     return: list of indices of elements from target that were selected
+
+    Notes
+    * The last spacing applies to all elements that do not match the earliera
+    spacings even if those elements are outside the last bound
+    * If the spacings in target are very different from the spacings in
+    spacing_params, the resulting subset of target might have a fairly
+    different spacing from the spacing params. This is a consequence of always
+    trying to save one subsequent item within a spacing of the last item, even
+    if the two are close. This behavior was chosen because it is more
+    conservative than trying to maintain the spacing as closely as possible
+    (which can have the side effect of throwing out all elements as the cross a
+    certain bound when space_by_span is called repeatedly on a list each time a
+    new element is added to the beginning of it).
     """
-    spacings = [par[0] for par in spacing_params]
-    bounds = [par[1] for par in spacing_params]
+    sorted_target = sorted(enumerate(target), key=lambda x: x[1],
+                           reverse=reverse)
+    orig_indices = [elem[0] for elem in sorted_target]
+    target = [elem[1] for elem in sorted_target]
 
-    sorted_target = sort_by_bounds(target, bounds)
+    # Always keep first element
+    keep = [0]
+    while keep[-1] < len(target) - 1:
+        # Get elements within spacing
+        spacing = spacing_lookup(abs(target[keep[-1]] - target[keep[0]]),
+                                 spacing_params)
+        followers = eligible_followers(target, keep[-1], spacing_params)
 
-    selected = []
-    for idx, subset in enumerate(sorted_target):
-        if not subset:
-            continue
+        # Choose element
+        if followers:
+            distance = [(f, abs(spacing - abs(target[keep[-1]] - target[f])))
+                        for f in followers]
+            distance.sort(key=lambda x: x[1])
+            keep.append(distance[0][0])
+        else:
+            keep.append(keep[-1] + 1)
 
-        spacing = spacings[idx]
-        selected.append(subset.pop(0))
-        candidate = None
-        while subset:
-            if not candidate:
-                if abs(target[subset[0]] - target[selected[-1]]) > spacing/2:
-                    candidate = subset.pop(0)
-                else:
-                    subset.pop(0)
-            else:
-                cand_delta = abs(abs(target[candidate] -
-                                     target[selected[-1]]) -
-                                 spacing)
-                next_delta = abs(abs(target[subset[0]] -
-                                     target[selected[-1]]) -
-                                 spacing)
-                if cand_delta > next_delta:
-                    candidate = subset.pop(0)
-                else:
-                    selected.append(candidate)
-                    candidate = None
-        if candidate:
-            selected.append(candidate)
-
-    return selected
+    return [orig_indices[idx] for idx in keep]

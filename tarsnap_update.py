@@ -81,7 +81,7 @@ def remove_backups(base):
     aging_params = [(datetime.timedelta(ap[0]), datetime.timedelta(ap[1]))
                     for ap in AGING_PARAMS]
     backups, times = get_backup_list(base)
-    keep_idx = list_filters.space_by_span(times, aging_params)
+    keep_idx = list_filters.space_by_span(times, aging_params, reverse=True)
     deletions = [backups[idx] for idx in range(len(backups))
                  if idx not in keep_idx]
     if len(deletions) == 0:
