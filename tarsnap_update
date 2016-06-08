@@ -4,8 +4,11 @@ import datetime
 import os
 import shlex
 import subprocess
+import time
 
 DATE_FORMAT = '%Y-%m-%d_%Hh%Mm%Ss'
+MAX_RETRY = 5
+RETRY_DELAY = 600
 
 
 def main(args):
@@ -16,7 +19,14 @@ def main(args):
                                       date=date_str)
     cmd = 'tarsnap -c -f "{archive}" "{target}"'
     cmd = cmd.format(archive=archive, target=target)
-    subprocess.call(shlex.split(cmd))
+    idx = 0
+    while idx < MAX_RETRY:
+        exit_code = subprocess.call(shlex.split(cmd))
+        if exit_code == 0:
+            break
+        else:
+            time.sleep(RETRY_DELAY)
+            idx = idx + 1
 
 if __name__ == '__main__':
     import argparse
