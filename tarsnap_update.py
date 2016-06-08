@@ -70,6 +70,8 @@ def remove_backups(base):
         retcode = subprocess.call(shlex.split(cmd))
         if retcode == 0:
             break
+        else:
+            time.sleep(RETRY_DELAY)
 
 
 def run_backup(target, base):
@@ -84,9 +86,21 @@ def run_backup(target, base):
     return exit_code
 
 
-def main(target, delay=0, buff=0):
+def main(target, delay=0, buff=0, aging_params=None, name=None):
     """Main backup logic"""
-    base = os.path.basename(target)
+    if aging_params is not None:
+        # pylint: disable=global-statement
+        if any(len(1) != 2 for l in aging_params):
+            raise ValueError(('Invalid aging input. All entries must lists of '
+                              'two floats.'))
+        else:
+            global AGING_PARAMS
+            AGING_PARAMS = aging_params
+        # pylint: enable=global-statement
+    if name is not None:
+        base = name
+    else:
+        base = os.path.basename(target)
     logger = logging.getLogger()
     for handler in logger.handlers:
         log_fmt = logging.Formatter(LOG_FORMAT.format(base=base + ':'),
@@ -140,6 +154,19 @@ if __name__ == '__main__':
                         help=('Time in minutes that must have elapsed for a '
                               'backup to be run (otherwise process exits '
                               'immediately)'))
+    parser.add_argument('--aging', '-a', type=float, default=None, nargs='*',
+                        action='append',
+                        help=('Aging parameters pair to append to list of '
+                              'aging parameters. First number is the spacing '
+                              'to keep between backups and the second is the '
+                              'oldest backup for which the spacing applies. '
+                              'Both numbers are in days. Rules should be '
+                              'applied as separate -a options applied in '
+                              'order of newest to oldest and override the '
+                              'default set.'))
+    parser.add_argument('--name', '-n', type=str, default=None,
+                        help=('String to use when creating backup name'))
     args = parser.parse_args()
     # pylint: enable=invalid-name
-    main(os.path.abspath(args.target), delay=args.delay, buff=args.buffer)
+    main(os.path.abspath(args.target), delay=args.delay, buff=args.buffer,
+         aging_params=args.aging, name=args.name)
