@@ -38,9 +38,10 @@ def get_backup_list(base):
                                                   universal_newlines=True)
             break
         except subprocess.CalledProcessError as err:
-            if err.returncode != -11 or idx == MAX_RETRY:
+            if err.returncode not in [1, -11] or idx == MAX_RETRY:
                 raise err
             else:
+                logging.info('list-archives exit code: %d', err.returncode)
                 time.sleep(RETRY_DELAY)
 
     backups_raw = backups_raw.splitlines()
@@ -68,7 +69,8 @@ def remove_backups(base):
         logging.info('No expired backups at this time')
         return
     logging.info('Deleting expired backups: %s', ', '.join(deletions))
-    cmd = 'tarsnap -d -f "{}"'.format(' -f '.join(deletions))
+    deletions = ['"{}"'.format(d) for d in deletions]
+    cmd = 'tarsnap -d -f {}'.format(' -f '.join(deletions))
     for _ in range(MAX_RETRY):
         retcode = subprocess.call(shlex.split(cmd))
         if retcode == 0:
