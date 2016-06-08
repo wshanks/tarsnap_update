@@ -15,3 +15,7 @@ Modify ExecStart in tarsnap.service to run tarsnap_update on correct target. Als
 	systemctl --user enable tarsnap.timer
 	systemctl --user enable tarnsape.service
 	systemctl --user start tarsnap.timer 
+
+License
+-------
+tarsnap_update is licensed under the GNU Public License version 3 (GPLv3).
