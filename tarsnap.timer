@@ -2,9 +2,8 @@
 Description=Tarsnap Timer
 
 [Timer]
-OnBootSec=25min
-OnCalendar=*-*-* 00:00:00
+OnCalendar=daily
 Persistent=true
 
 [Install]
-WantedBy=tarsnap.target
+WantedBy=timers.target

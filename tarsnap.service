@@ -6,4 +6,4 @@ Wants=tarsnap.timer
 ExecStart=/home/wshanks/bin/tarsnap_update %h/Documents/Vault
 
 [Install]
-WantedBy=tarsnap.target
+WantedBy=timers.target

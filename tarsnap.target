@@ -1,3 +1,0 @@
-[Unit]
-Description=Tarsnap target
-StopWhenUnneeded=yes
