@@ -14,7 +14,7 @@ Modify ExecStart in tarsnap.service to run tarsnap_update on correct target. Als
 
 	cp tarsnap.timer tarsnap.service ~/.config/systemd/user
 	systemctl --user enable tarsnap.timer
-	systemctl --user enable tarnsape.service
+	systemctl --user enable tarnsap.service
 	systemctl --user start tarsnap.timer 
 
 License
