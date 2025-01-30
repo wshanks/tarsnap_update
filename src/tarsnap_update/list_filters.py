@@ -13,17 +13,19 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with tarsnap_update.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright 2016, willsALMANJ
+# Copyright 2025, Will Shanks
+
+__all__ = ["space_by_span"]
 
 
 def spacing_lookup(distance, spacing_params):
-    '''Determine the spacing that applies for distance
+    """Determine the spacing that applies for distance
 
     distance is compared to the bounds in spacing_params. The spacing
     associated with the smallest bound greater than distance is returned.
-    '''
+    """
     spacing = None
     for spacing, bound in spacing_params:
         if distance < bound:
@@ -32,25 +34,23 @@ def spacing_lookup(distance, spacing_params):
 
 
 def eligible_followers(target, index, spacing_params):
-    '''Find elements within spacing of element of target
+    """Find elements within spacing of element of target
 
     target -- list of elements
     index -- starting index to compare subsequent elements to
     spacing_params -- spacing params list
 
     Elements following index are examined to see if they want the same spacing
-    as index and, if so, if they are within spacing of index.'''
+    as index and, if so, if they are within spacing of index."""
     followers = []
-    cur_spacing = spacing_lookup(abs(target[index] - target[0]),
-                                 spacing_params)
-    for jdx in range(index+1, len(target)):
-        j_spacing = spacing_lookup(abs(target[jdx] - target[0]),
-                                   spacing_params)
+    cur_spacing = spacing_lookup(abs(target[index] - target[0]), spacing_params)
+    for jdx in range(index + 1, len(target)):
+        j_spacing = spacing_lookup(abs(target[jdx] - target[0]), spacing_params)
 
         j_distance = abs(target[jdx] - target[index])
 
         # Extra 5% cushion to avoid edge cases
-        if j_spacing == cur_spacing and j_distance < 1.05*cur_spacing:
+        if j_spacing == cur_spacing and j_distance < 1.05 * cur_spacing:
             followers.append(jdx)
         else:
             break
@@ -99,8 +99,7 @@ def space_by_span(target, spacing_params, reverse=False):
     a certain bound when space_by_span is called repeatedly on a list each time
     a new element is added to the beginning of it).
     """
-    sorted_target = sorted(enumerate(target), key=lambda x: x[1],
-                           reverse=reverse)
+    sorted_target = sorted(enumerate(target), key=lambda x: x[1], reverse=reverse)
     orig_indices = [elem[0] for elem in sorted_target]
     target = [elem[1] for elem in sorted_target]
 
@@ -108,14 +107,16 @@ def space_by_span(target, spacing_params, reverse=False):
     keep = [0]
     while keep[-1] < len(target) - 1:
         # Get elements within spacing
-        spacing = spacing_lookup(abs(target[keep[-1]] - target[keep[0]]),
-                                 spacing_params)
+        spacing = spacing_lookup(
+            abs(target[keep[-1]] - target[keep[0]]), spacing_params
+        )
         followers = eligible_followers(target, keep[-1], spacing_params)
 
         # Choose element
         if followers:
-            distance = [(f, abs(spacing - abs(target[keep[-1]] - target[f])))
-                        for f in followers]
+            distance = [
+                (f, abs(spacing - abs(target[keep[-1]] - target[f]))) for f in followers
+            ]
             distance.sort(key=lambda x: x[1])
             keep.append(distance[0][0])
         else:

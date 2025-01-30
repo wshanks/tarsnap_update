@@ -1,3 +1,7 @@
 *.sw?
 __pycache__
 extra/
+
+# pixi environments
+.pixi
+*.egg-info
