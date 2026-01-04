@@ -22,9 +22,11 @@ import datetime
 import logging
 import os
 import re
+import shutil
 import subprocess
 import time
 from itertools import repeat
+from pathlib import Path
 
 from tarsnap_update.list_filters import space_by_span
 
@@ -40,10 +42,24 @@ TARSNAP_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 logger = logging.getLogger(__name__)
 
 
+def lookup_tarsnap_bin() -> str:
+    """Find the tarsnap binary
+
+    This is a workaround to Bluefin using Homebrew for tarsnap where the bin/
+    directory is not in the systemd PATH.
+    """
+    tarsnap_bin = shutil.which("tarsnap") or "/home/linuxbrew/.linuxbrew/bin/tarsnap"
+    if not Path(tarsnap_bin).exists():
+        raise RunetimeError("Could not find tarsnap executable!")
+
+    return tarsnap_bin
+
+
 def get_backup_list(base):
     """Get list from tarsnap and filter by base"""
     # Get the backup list from the tarsnap server
-    cmd = ["tarsnap", "-v", "--list-archives"]
+    tarsnap_bin = lookup_tarsnap_bin()
+    cmd = [tarsnap_bin, "-v", "--list-archives"]
     for idx in range(MAX_RETRY + 1):
         try:
             backups_raw = subprocess.check_output(cmd, universal_newlines=True)
@@ -81,7 +97,8 @@ def remove_backups(base, aging_params):
         return
     logger.info("Deleting expired backups: %s", ", ".join(deletions))
     args = [arg for f_d in zip(repeat("-f"), deletions) for arg in f_d]
-    cmd = ["tarsnap", "-d"] + args
+    tarsnap_bin = lookup_tarsnap_bin()
+    cmd = [tarsnap_bin, "-d"] + args
     for _ in range(MAX_RETRY):
         retcode = subprocess.call(cmd)
         if retcode == 0:
@@ -93,7 +110,8 @@ def run_single_backup(target, base):
     """Run the tarsnap backup"""
     date_str = datetime.datetime.now().strftime(DATE_FORMAT)
     archive = f"{base}: {date_str}"
-    cmd = ["tarsnap", "-c", "-f", archive, target]
+    tarsnap_bin = lookup_tarsnap_bin()
+    cmd = [tarsnap_bin, "-c", "-f", archive, target]
     logger.info("Running backup: %s", ' '.join(cmd))
     exit_code = subprocess.call(cmd)
     return exit_code
